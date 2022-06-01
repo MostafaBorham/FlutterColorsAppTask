@@ -4,7 +4,8 @@ import 'package:colors_app/core/app_resources/app_constants.dart';
 import 'package:colors_app/core/app_resources/app_strings.dart';
 import 'package:colors_app/core/app_resources/app_values.dart';
 import 'package:colors_app/core/widgets/custom_button.dart';
-import 'package:colors_app/core/widgets/custom_text_form_field.dart';
+import 'package:colors_app/features/colors/presentation/widgets/user_colors_form/custom_text_form_field.dart';
+import 'package:colors_app/features/colors/data/models/async_validation_colors.dart';
 import 'package:colors_app/features/colors/presentation/pages/print_colors_page/main_page.dart';
 import 'package:colors_app/features/colors/presentation/state_management/bloc/colors/colors_bloc.dart';
 import 'package:colors_app/features/colors/presentation/state_management/bloc/colors/colors_events.dart';
@@ -14,16 +15,20 @@ import '../../../../../core/app_resources/app_colors.dart';
 import '../../state_management/bloc/colors/colors_states.dart';
 
 class UserColorsForm extends StatelessWidget {
+  ////////////////Variables
   final _formedKey = GlobalKey<FormState>();
   final _firstTextFieldController = TextEditingController();
   final _secondTextFieldController = TextEditingController();
   final _thirdTextFieldController = TextEditingController();
   final _forthTextFieldController = TextEditingController();
+  List<AsyncValidationColorsModel> errorColorsList = [];
   bool _isSecondTextFieldEnabled = true;
-  String? _currentErrorTextOfSecondTextField;
+  bool _isSendBtnEnabled = false;
   List<String> suggestions = [];
+  ////////////////Constructors
   UserColorsForm({Key? key}) : super(key: key);
 
+  /////////////Build Function -> start of screen
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -32,6 +37,7 @@ class UserColorsForm extends StatelessWidget {
     );
   }
 
+  //////////////////////////////////Scaffold Components Methods
   AppBar _buildAppBar() => AppBar(
         leading: const Icon(Icons.app_registration),
         title: const Text(COLORS_FORM_TITLE),
@@ -42,14 +48,18 @@ class UserColorsForm extends StatelessWidget {
         child: Center(
           child: BlocConsumer<ColorsBloc, ColorsState>(
             listener: (context, state) {
-              if (state is GetAutoCompleteSuggestionsState) {
+              if (state is GetDefaultColorState) {
+                _forthTextFieldController.text = state.defaultColor;
+                _formedKey.currentState!.validate();
+              } else if (state is GetAutoCompleteSuggestionsState) {
                 suggestions = state.suggestions;
+              } else if (state is GetAllErrorColorsState) {
+                errorColorsList = state.errorColorsList;
+              } else if (state is SendBtnStatusChangedState) {
+                _isSendBtnEnabled = state.isEnabled;
               }
             },
             builder: (context, state) {
-              if (state is GetDefaultColorState) {
-                _forthTextFieldController.text = state.defaultColor;
-              }
               return Form(
                 key: _formedKey,
                 child: SingleChildScrollView(
@@ -70,15 +80,16 @@ class UserColorsForm extends StatelessWidget {
                         height: AppDimension.D15,
                       ),
                       buildCustomTextForm(
-                          controller: _secondTextFieldController,
-                          context: context,
-                          label: 'SecondTextField',
-                          enabled: _controlInDisplaySecondTextField(state),
-                          maxLength: 9,
-                          errorText: _getErrorTextOfSecondTextField(state),
-                          validator: (input) =>
-                              _validateSecondTextField(input, context,state),
-                          key: _formedKey),
+                        controller: _secondTextFieldController,
+                        context: context,
+                        label: 'SecondTextField',
+                        enabled: _controlInDisplaySecondTextField(state),
+                        maxLength: 9,
+                        //errorText: _getErrorTextOfSecondTextField(state),
+                        validator: (input) =>
+                            _validateSecondTextField(input, context),
+                        key: _formedKey,
+                      ),
                       const SizedBox(
                         height: AppDimension.D15,
                       ),
@@ -108,10 +119,8 @@ class UserColorsForm extends StatelessWidget {
                       SizedBox(
                           width: double.infinity,
                           child: buildCustomButton(
-                              onPressed: state is SendBtnStatusChangedState
-                                  ? (state.isEnabled
-                                      ? () => _sendColorsData(context)
-                                      : null)
+                              onPressed: _isSendBtnEnabled
+                                  ? () => _sendColorsData(context)
                                   : null,
                               text: 'Send'))
                     ],
@@ -123,6 +132,7 @@ class UserColorsForm extends StatelessWidget {
         ),
       );
 
+  ///////////////////////////////Private Class Methods
   _sendColorsData(context) {
     final colorsFormList = [
       _firstTextFieldController.text,
@@ -136,7 +146,7 @@ class UserColorsForm extends StatelessWidget {
             builder: (_) => PrintColorsPage(colorsFormData: colorsFormList)));
   }
 
-  String? validateInput(String input, int minLength) {
+  String? _validateInput(String input, int minLength) {
     if (input.isEmpty) {
       return 'must be fill !';
     } else if (input.length < minLength) {
@@ -146,7 +156,7 @@ class UserColorsForm extends StatelessWidget {
     }
   }
 
-  String? isStartedWithA(context, String input) {
+  String? _isStartedWithA(context, String input) {
     if (input.startsWith('a')) {
       BlocProvider.of<ColorsBloc>(context).add(ColorStartedWithAEvent());
       return 'must not start with a';
@@ -164,46 +174,35 @@ class UserColorsForm extends StatelessWidget {
     }
   }
 
-  String? _getErrorTextOfSecondTextField(ColorsState state) {
-    if (state is ErrorColorState) {
-      _formedKey.currentState!.validate();
-      return _currentErrorTextOfSecondTextField = state.message;
-    } else if (state is NoErrorColorState) {
-      _formedKey.currentState!.validate();
-      return _currentErrorTextOfSecondTextField = null;
-    } else {
-      return _currentErrorTextOfSecondTextField;
-    }
-  }
-
   String? _validateFirstTextField(input, context) {
-    String? result = isStartedWithA(context, input!);
+    String? result = _isStartedWithA(context, input!);
     if (result != null) {
       return result;
     } else {
       BlocProvider.of<ColorsBloc>(context).add(ColorNotStartedWithAEvent());
-      return validateInput(input, MIN_LENGTH_6);
+      return _validateInput(input, MIN_LENGTH_6);
     }
   }
 
-  String? _validateSecondTextField(input, context,state) {
-    String? result = validateInput(input, MIN_LENGTH_3);
+  String? _validateSecondTextField(input, context) {
+    String? result = _validateInput(input, MIN_LENGTH_3);
     if (result == null) {
-      if(state is! ErrorColorState || state is! NoErrorColorState){
-        BlocProvider.of<ColorsBloc>(context).add(CheckIfErrorColorEvent(input));
+      for (var element in errorColorsList) {
+        if (element.color == input) {
+          return element.errorMessage;
+        }
       }
-      result= _currentErrorTextOfSecondTextField;
     }
     return result;
   }
 
   String? _validateThirdTextField(input, context) {
-    String? result = validateInput(input, MIN_LENGTH_3);
+    String? result = _validateInput(input, MIN_LENGTH_3);
     return result;
   }
 
   String? _validateForthTextField(input, context) {
-    String? result = validateInput(input, MIN_LENGTH_3);
+    String? result = _validateInput(input, MIN_LENGTH_3);
     return result;
   }
 }

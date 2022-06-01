@@ -4,8 +4,7 @@ import 'package:colors_app/features/colors/presentation/state_management/bloc/co
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
-
-import '../app_resources/app_values.dart';
+import '../../../../../core/app_resources/app_values.dart';
 
 TextFormField buildCustomTextForm({
   required TextEditingController controller,
@@ -37,12 +36,16 @@ TextFormField buildCustomTextForm({
       minLines: minLines,
       maxLines: maxLines,
       maxLength: maxLength,
-      onChanged: (input) {
-        if (key.currentState!.validate()) {
-          BlocProvider.of<ColorsBloc>(context)
-              .add(ChangeSendBtnStatusEvent(TRUE));
-        }
-      },
+      onChanged: onChanged ??
+          (input) {
+            if (key.currentState!.validate()) {
+              BlocProvider.of<ColorsBloc>(context)
+                  .add(ChangeSendBtnStatusEvent(TRUE));
+            } else {
+              BlocProvider.of<ColorsBloc>(context)
+                  .add(ChangeSendBtnStatusEvent(FALSE));
+            }
+          },
       validator: validator,
     );
 
@@ -78,12 +81,16 @@ Widget buildAutoCompleteTextField(
         minLines: minLines,
         maxLines: maxLines,
         maxLength: maxLength,
-        onChanged: (input) {
-          if (key.currentState!.validate()) {
-            BlocProvider.of<ColorsBloc>(context)
-                .add(ChangeSendBtnStatusEvent(TRUE));
-          }
-        },
+        onChanged: onChanged ??
+            (input) {
+              if (key.currentState!.validate()) {
+                BlocProvider.of<ColorsBloc>(context)
+                    .add(ChangeSendBtnStatusEvent(TRUE));
+              } else {
+                BlocProvider.of<ColorsBloc>(context)
+                    .add(ChangeSendBtnStatusEvent(FALSE));
+              }
+            },
       ),
       suggestionsCallback: (pattern) => suggestions,
       itemBuilder: (context, suggestion) {
@@ -93,6 +100,7 @@ Widget buildAutoCompleteTextField(
       },
       onSuggestionSelected: (suggestion) {
         controller.text = suggestion.toString();
+        key.currentState!.validate();
       },
       validator: validator,
     );

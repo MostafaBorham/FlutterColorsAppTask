@@ -24,23 +24,30 @@ class PrintColorsPage extends StatelessWidget {
       );
 
   Widget _buildBody() => Padding(
-    padding:  const EdgeInsets.all(AppPadding.P10),
-    child: Flex(
-      direction: Axis.vertical,
-      children: [
-        Expanded(
-          child: ListView.separated(
-              itemBuilder: (context,index)=>_buildItemList(colorsFormData[index]),
-              separatorBuilder: (context,index)=>const ListDivider(),
-              itemCount: colorsFormData.length),
+        padding: const EdgeInsets.all(AppPadding.P10),
+        child: Flex(
+          direction: Axis.vertical,
+          children: [
+            Expanded(
+              child: ListView.separated(
+                  itemBuilder: (context, index) =>
+                      _buildItemList(colorsFormData[index]),
+                  separatorBuilder: (context, index) => const ListDivider(),
+                  itemCount: colorsFormData.length),
+            ),
+          ],
         ),
-      ],
-    ),
-  );
+      );
 
-  Widget _buildItemList(title)=>ListTile(
-    leading: const Icon(Icons.color_lens,color: PRIMARY,),
-    title: Text(title),
-    trailing: const Icon(Icons.check_circle,color: SUCCESS,),
-  );
+  Widget _buildItemList(title) => ListTile(
+        leading: const Icon(
+          Icons.color_lens,
+          color: PRIMARY,
+        ),
+        title: Text(title),
+        trailing: const Icon(
+          Icons.check_circle,
+          color: SUCCESS,
+        ),
+      );
 }

@@ -5,7 +5,7 @@ import 'package:colors_app/features/colors/presentation/state_management/bloc/co
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   di.initAppDependencies();
   runApp(const MyApp());
@@ -18,12 +18,16 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (context)=> di.instance<ColorsBloc>()..add(GetAutoCompleteSuggestionsEvent())..add(GetDefaultColorEvent())),
+        BlocProvider(
+            create: (context) => di.instance<ColorsBloc>()
+              ..add(GetAutoCompleteSuggestionsEvent())
+              ..add(GetDefaultColorEvent())
+              ..add(GetAllErrorColors())),
       ],
       child: MaterialApp(
-          debugShowCheckedModeBanner: false,
-          home: UserColorsForm(),
-        ),
+        debugShowCheckedModeBanner: false,
+        home: UserColorsForm(),
+      ),
     );
   }
 }

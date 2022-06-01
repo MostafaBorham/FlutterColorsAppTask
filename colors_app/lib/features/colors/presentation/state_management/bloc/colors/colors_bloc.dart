@@ -20,40 +20,27 @@ class ColorsBloc extends Bloc<ColorsEvent, ColorsState> {
     on<ColorsEvent>((event, emit) async {
       if (event is ColorStartedWithAEvent) {
         emit(HideSecondTextFieldState());
-      }
-      else if (event is ColorNotStartedWithAEvent) {
+      } else if (event is ColorNotStartedWithAEvent) {
         emit(ShowSecondTextFieldState());
-      }
-      else if (event is CheckIfErrorColorEvent) {
+      } else if (event is GetAllErrorColors) {
         final response = await errorColorsUseCase();
-        response
-            .fold((failure) => emit(ErrorColorState(failure.getFailureMessage)),
-                (colorErrorList) {
-          ColorsState colorsStateTmp = NoErrorColorState();
-          for (var element in colorErrorList) {
-            if (element.color == event.color) {
-              colorsStateTmp = ErrorColorState(element.errorMessage!);
-              break;
-            }
-          }
-          emit(colorsStateTmp);
+        response.fold((failure) => emit(GetAllErrorColorsState([])),
+            (colorErrorList) {
+          emit(GetAllErrorColorsState(colorErrorList));
         });
-      }
-      else if (event is GetAutoCompleteSuggestionsEvent) {
+      } else if (event is GetAutoCompleteSuggestionsEvent) {
         final response = await autoSuggestionsColorsUseCase();
         response.fold(
           (failure) => emit(GetAutoCompleteSuggestionsState([])),
           (suggestions) => emit(GetAutoCompleteSuggestionsState(suggestions)),
         );
-      }
-      else if (event is GetDefaultColorEvent) {
+      } else if (event is GetDefaultColorEvent) {
         final response = await defaultColorUseCase();
         response.fold(
           (failure) => emit(GetDefaultColorState(EMPTY)),
           (defaultColor) => emit(GetDefaultColorState(defaultColor)),
         );
-      }
-      else if (event is ChangeSendBtnStatusEvent) {
+      } else if (event is ChangeSendBtnStatusEvent) {
         emit(SendBtnStatusChangedState(event.isEnabled));
       }
     });
